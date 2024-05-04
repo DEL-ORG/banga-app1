@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth
+spec:
+  selector:
+    app: auth
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth
+  template:
+    metadata:
+      labels:
+        app: auth
+    spec:
+      containers:
+      - name: auth
+        image: devopseasylearning/banga-auth:v0.0.1
+        env:
+          - name: DB_HOST
+            value: db
+          - name: DB_PASSWORD
+            value: my-secret-pw
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: auth-role
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: auth-rolebinding
+subjects:
+- kind: ServiceAccount
+  name: auth-serviceaccount
+roleRef:
+  kind: Role
+  name: auth-role
+  apiGroup: rbac.authorization.k8s.io
+
